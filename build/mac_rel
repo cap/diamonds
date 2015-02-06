@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -e
+. meta
+
+BUILD_ROOT=rel
+rm -rf $BUILD_ROOT
+mkdir -p $BUILD_ROOT
+
+# build
+FLAGS="-DCAP_PACKAGE=$CAP_PACKAGE -DCAP_VERSION=$CAP_VERSION -DCAP_COMMIT=$CAP_COMMIT -Werror -Wall -pedantic -Wno-gnu -O2 -std=c++11 -I/usr/local/include/SDL2/"
+LIBS="-lSDL2 -framework opengl"
+c++ $FLAGS src/main.cc -o $BUILD_ROOT/$CAP_EXECUTABLE $LIBS
+
+# package
+PACKAGE_ROOT=$BUILD_ROOT/pkg
+BUNDLE=$PACKAGE_ROOT/$CAP_PACKAGE.app/Contents
+FRAMEWORKS=$BUNDLE/Frameworks
+MACOS=$BUNDLE/MacOS
+BUNDLE_EXECUTABLE=$MACOS/$CAP_EXECUTABLE
+SDL_DYLIB=libSDL2-2.0.0.dylib
+SDL_ORIGIN=/usr/local/lib/$SDL_DYLIB
+rm -rf $CAP_PACKAGE.app $CAP_PACKAGE.zip
+mkdir -p $FRAMEWORKS $MACOS
+cp $BUILD_ROOT/$CAP_EXECUTABLE $BUNDLE_EXECUTABLE
+install_name_tool -change $SDL_ORIGIN @rpath/$SDL_DYLIB $BUNDLE_EXECUTABLE
+install_name_tool -add_rpath @loader_path/../Frameworks $BUNDLE_EXECUTABLE
+cp $SDL_ORIGIN $BUNDLE/Frameworks
+cp readme.md $PACKAGE_ROOT/readme.txt
+cat << EOF > $BUNDLE/Info.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>CFBundleName</key>
+    <string>$CAP_PACKAGE</string>
+    <key>CFBundleIdentifier</key>
+    <string>ch.cpets.$CAP_EXECUTABLE</string>
+    <key>CFBundleVersion</key>
+    <string>$CAP_VERSION</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleExecutable</key>
+    <string>$CAP_EXECUTABLE</string>
+  </dict>
+</plist>
+EOF
+pushd $PACKAGE_ROOT
+zip ${CAP_PACKAGE}Mac.zip -r $CAP_PACKAGE.app readme.txt
+mv ${CAP_PACKAGE}Mac.zip ..
+popd

@@ -1,0 +1,5 @@
+CAP_PACKAGE=Diamonds
+CAP_EXECUTABLE=diamonds
+CAP_VERSION=0.0.1
+CAP_COMMIT=`git rev-parse --short HEAD`
+CAP_BUILD=out

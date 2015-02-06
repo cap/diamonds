@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+. meta
+
+BUILD_ROOT=dbg
+rm -rf $BUILD_ROOT
+mkdir -p $BUILD_ROOT
+
+FLAGS="-DCAP_DEBUG -DCAP_EXECUTABLE=$CAP_EXECUTABLE -DCAP_PACKAGE=$CAP_PACKAGE -DCAP_VERSION=$CAP_VERSION -DCAP_COMMIT=$CAP_COMMIT -Wall -Wno-gnu -pedantic -g -O2 -std=c++11 -I/usr/local/include/SDL2/"
+LIBS="-lSDL2 -framework opengl"
+c++ $FLAGS -dynamiclib src/game.cc -o $BUILD_ROOT/$CAP_EXECUTABLE.dylib $LIBS
+c++ $FLAGS -DCAP_LOAD_DYNAMIC src/main.cc -o $BUILD_ROOT/$CAP_EXECUTABLE $LIBS
